@@ -1,1 +1,2 @@
 com\datathon\pricing\App.class
+com\datathon\pricing\KafkaCustomerProducer.class

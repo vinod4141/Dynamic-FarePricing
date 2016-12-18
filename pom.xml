@@ -9,6 +9,9 @@
   	<module>fare-pricing-services</module>
   	
   	<module>FareProducer</module>
+  	
+  	
+  	<module>FareConsumer</module>
   </modules>
   <properties>
   		<java-version>1.8</java-version>

@@ -81,8 +81,8 @@ public class KafkaCustomerProducer{
 	
 	private Properties getkafkaConfig(){
 		Properties props = new Properties();
-		props.put("bootstrap.servers", "localhost:9092");
-		props.put("metadata.broker.list", "localhost:9092");
+		props.put("bootstrap.servers", "10.100.12.165:9092");
+		props.put("metadata.broker.list", "10.100.12.165:9092");
 /*		props.put("bootstrap.servers", "dolinux752.hq.emirates.com:9092,dolinux753.hq.emirates.com:9092,dolinux768.hq.emirates.com:9092");
 		props.put("metadata.broker.list", "dolinux752.hq.emirates.com:9092,dolinux753.hq.emirates.com:9092,dolinux768.hq.emirates.com:9092");
 */		props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
@@ -98,7 +98,7 @@ public class KafkaCustomerProducer{
 /*		props.put("bootstrap.servers", "localhost:9092");
 		props.put("metadata.broker.list", "localhost:9092");
 */
-		props.put("partitioner.class", "test.SimplePartitioner");
+	//	props.put("partitioner.class", "test.SimplePartitioner");
 		props.put("key.serializer", "org.apache.kafka.common.serialization.bytearrayserializer");
 		props.put("value.serializer", "org.apache.kafka.common.serialization.bytearrayserializer");
 		props.put("request.required.acks", "1");
