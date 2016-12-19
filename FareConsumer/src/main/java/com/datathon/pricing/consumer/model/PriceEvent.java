@@ -5,6 +5,10 @@ import java.security.DigestException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.apache.flink.api.java.functions.KeySelector;
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.KeyedStream;
+
 public class PriceEvent {
 	
 	   private String sr_no;
@@ -258,6 +262,16 @@ public class PriceEvent {
 		 }
 		return hashCode;
 	}
+	
+	KeyedStream<PriceEvent,Integer> getPriceEventKey(DataStream<PriceEvent> event) {
+		KeyedStream<PriceEvent,Integer> priceKey = event
+				  .keyBy(new KeySelector<PriceEvent, Integer>() {
+				     public Integer getKey(PriceEvent priceEvent) { return priceEvent.hashCode(); }
+				   });
+		
+		return priceKey;
+	}
+
 	   
 	
 	   
