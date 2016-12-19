@@ -1,5 +1,10 @@
 package com.datathon.pricing.consumer.model;
 
+import java.nio.ByteBuffer;
+import java.security.DigestException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 public class PriceEvent {
 	
 	   private String sr_no;
@@ -221,6 +226,38 @@ public class PriceEvent {
 		this.od = od;
 	}
 	   
+	public boolean equals(Object obj) {
+		return (this == obj);
+	}
+	
+	public int hashCode() {
+	    int hashCode = 0;
+
+		 try {
+			
+				byte[] result = null;
+				StringBuffer buf = null;
+				 String strKey = carrier+origin+destination+outboundDepartureDate+outBoundDepartureTime+compartment;
+				MessageDigest md = MessageDigest.getInstance("MD5");
+				// allocate room for the hash
+				result = new byte[md.getDigestLength()];
+				// calculate hash
+				md.reset();
+				md.update(strKey.getBytes());
+				result = md.digest();
+			
+        	    hashCode=  ByteBuffer.wrap(result).getInt();
+	
+		 } catch (NoSuchAlgorithmException cnse) {
+		     try {
+				throw new DigestException("couldn't make digest of partial content");
+			} catch (DigestException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		 }
+		return hashCode;
+	}
 	   
 	
 	   

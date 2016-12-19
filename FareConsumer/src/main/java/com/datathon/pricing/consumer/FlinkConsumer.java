@@ -1,9 +1,13 @@
 package com.datathon.pricing.consumer;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.FilterFunction;
+
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -18,10 +22,16 @@ import com.datathon.pricing.consumer.util.EventUtil;
 
 public class FlinkConsumer {
 	private static final int MAX_EVENT_DELAY = 60; //out of event max 60 second
+	private static ArrayList OND = new ArrayList();
+	
 	
 	public static void main(String[] args) throws Exception {
 		// create execution environment
 		try {
+			OND.add("CPHHKT");
+			OND.add("DUSBUM");
+			OND.add("HKGFLL");
+			
 		StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 		Map  map  = new HashMap();
 		map.put("bootstrap.servers", "10.100.12.165:9092");
@@ -41,20 +51,34 @@ public class FlinkConsumer {
 		// print() will write the contents of the stream to the TaskManager's standard out stream
 		// the rebelance call is causing a repartitioning of the data so that all machines
 		// see the messages (for example in cases when "num kafka partitions" < "num flink operators"
-		messageStream.rebalance().map(new MapFunction<String, String>() {
+		
+		DataStream<PriceEvent> priceEventstream = messageStream.map(new MapFunction<String, PriceEvent>() {
 			private static final long serialVersionUID = -6867736771747690202L;
 
 			@Override
-			public String map(String value) throws Exception {
+			public PriceEvent map(String value) throws Exception {
 				
 				PriceEvent event = EventUtil.getPriceEvent(value);
-				return EventUtil.getEventJSON(event);
-				//return "Kafka and Flink says: " + value;
-				
+				return event;
 			}
 			
-		}).print();
+		});
+		
+		DataStream<PriceEvent> ONDFilteredEventstream = priceEventstream.filter(new FilterFunction<PriceEvent>() {
+			private static final long serialVersionUID = -6867736771747690202L;
 
+			@Override
+			public boolean filter(PriceEvent value) throws Exception {
+				if(OND.contains(value.getOd())){
+					return true;
+		}else{
+			return false;
+		}
+			}
+			
+		});
+
+		ONDFilteredEventstream.print();
 		env.execute();
 	
 		} catch (Exception e){
