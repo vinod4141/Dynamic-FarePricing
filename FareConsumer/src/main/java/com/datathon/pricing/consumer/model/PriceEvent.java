@@ -8,6 +8,8 @@ import java.security.NoSuchAlgorithmException;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
+import org.apache.flink.streaming.api.datastream.WindowedStream;
+import org.apache.flink.streaming.api.windowing.windows.GlobalWindow;
 
 public class PriceEvent {
 	
@@ -262,6 +264,11 @@ public class PriceEvent {
 		 }
 		return hashCode;
 	}
+	/**
+	 * Gives the logical stream based on the PriceEvent key.
+	 * @param event
+	 * @return
+	 */
 	
 	KeyedStream<PriceEvent,Integer> getPriceEventKey(DataStream<PriceEvent> event) {
 		KeyedStream<PriceEvent,Integer> priceKey = event
@@ -271,6 +278,20 @@ public class PriceEvent {
 		
 		return priceKey;
 	}
+	/**
+	 * Returns the sliding window.
+	 * @param value
+	 * @return
+	 */
+	
+	WindowedStream<PriceEvent,Integer,GlobalWindow> createSlidingWindow(KeyedStream<PriceEvent,Integer> value) {
+		return value.countWindow(2, 1);
+	}
+	
+public static void main(String[] args) {
+	DataStream<PriceEvent> streamFiletered; //Filetered data stream.
+	//streamFiletered.keyBy(key) keysteam.window.reduce
+}
 
 	   
 	
