@@ -44,6 +44,7 @@ public class PriceEvent {
 	   private String OutBoundArrivalTime ;
 	   private String InboundArrivalTime ;
 	   private String od;
+	   private Integer priceChange;
 	   
 	public String getSr_no() {
 		return sr_no;
@@ -236,6 +237,14 @@ public class PriceEvent {
 		return (this == obj);
 	}
 	
+	public Integer getPriceChange() {
+		return priceChange;
+	}
+	public void setPriceChange(Integer priceChange) {
+		this.priceChange = priceChange;
+	}
+
+	
 	public int hashCode() {
 	    int hashCode = 0;
 
@@ -286,6 +295,10 @@ public class PriceEvent {
 	
 	WindowedStream<PriceEvent,Integer,GlobalWindow> createSlidingWindow(KeyedStream<PriceEvent,Integer> value) {
 		return value.countWindow(2, 1);
+	}
+	
+	public String toString() {
+		return carrier+":"+origin+":"+destination+":"+outboundDepartureDate+":"+outBoundDepartureTime+":"+compartment+":"+priceINC;
 	}
 	
 public static void main(String[] args) {
