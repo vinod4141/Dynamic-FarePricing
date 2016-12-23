@@ -10,6 +10,7 @@ public class DPPriceKeyReduceFunction implements ReduceFunction {
 			// TODO Auto-generated method stub
 			PriceEvent evtCurr = (PriceEvent) current;
 			PriceEvent evtPrev = (PriceEvent) previous;
+			
 			if(Math.abs(new Integer(evtCurr.getPriceEXC())- new Integer(evtPrev.getPriceEXC()))
 					/new Integer(evtCurr.getPriceEXC())>0.20) {
 				//TODO
