@@ -14,37 +14,37 @@ import org.apache.flink.streaming.api.windowing.windows.GlobalWindow;
 public class PriceEvent {
 	
 	   private String sr_no;
-	   private String id; 
-	   private String observationDate; 
-	   private String observationTime ;
-	   private String pos ;
-	   private String origin;
-	   private String destination ;
-	   private String carrier ;
-	   private String outboundDepartureDate ;
-	   private String outboundArrivalDate ;
-	   private String inboundDepartureDate ;
-	   private String inboundArrivalDate ;
-	   private String outboundFareBasis ;
-	   private String inboundFareBasis ;
-	   private String outboundBookingClass ;
-	   private String inboundBookingClass ;
-	   private String priceEXC ;
-	   private String priceINC ;
-	   private String tax  ;
-	   private String currency ;
-	   private String source ;
-	   private String priceOutbound;
-	   private String priceInbound ;
-	   private String isTaxIncCutIn ;
-	   private String compartment ;
-	   private String loadDate ;
-	   private String outBoundDepartureTime ;
-	   private String inboundDepartureTime ;
-	   private String OutBoundArrivalTime ;
-	   private String InboundArrivalTime ;
-	   private String od;
-	   private Integer priceChange;
+	   private String id=""; 
+	   private String observationDate=""; 
+	   private String observationTime="" ;
+	   private String pos="" ;
+	   private String origin="";
+	   private String destination="" ;
+	   private String carrier="" ;
+	   private String outboundDepartureDate="" ;
+	   private String outboundArrivalDate="" ;
+	   private String inboundDepartureDate="" ;
+	   private String inboundArrivalDate="" ;
+	   private String outboundFareBasis="" ;
+	   private String inboundFareBasis="" ;
+	   private String outboundBookingClass="" ;
+	   private String inboundBookingClass="" ;
+	   private String priceEXC="" ;
+	   private String priceINC="" ;
+	   private String tax=""  ;
+	   private String currency="" ;
+	   private String source="" ;
+	   private String priceOutbound="";
+	   private String priceInbound="" ;
+	   private String isTaxIncCutIn="" ;
+	   private String compartment="" ;
+	   private String loadDate="" ;
+	   private String outBoundDepartureTime="" ;
+	   private String inboundDepartureTime="" ;
+	   private String OutBoundArrivalTime="" ;
+	   private String InboundArrivalTime="" ;
+	   private String od="";
+	   private Double priceChange=0.0;
 	   
 	public String getSr_no() {
 		return sr_no;
@@ -237,10 +237,10 @@ public class PriceEvent {
 		return (this == obj);
 	}
 	
-	public Integer getPriceChange() {
+	public Double getPriceChange() {
 		return priceChange;
 	}
-	public void setPriceChange(Integer priceChange) {
+	public void setPriceChange(Double priceChange) {
 		this.priceChange = priceChange;
 	}
 
@@ -298,7 +298,8 @@ public class PriceEvent {
 	}
 	
 	public String toString() {
-		return carrier+":"+origin+":"+destination+":"+outboundDepartureDate+":"+outBoundDepartureTime+":"+compartment+":"+priceINC;
+		return carrier + ":" + origin + ":" + destination + ":" + outboundDepartureDate + ":" + outBoundDepartureTime
+				+ ":" + compartment + ":" + priceINC;
 	}
 	
 public static void main(String[] args) {

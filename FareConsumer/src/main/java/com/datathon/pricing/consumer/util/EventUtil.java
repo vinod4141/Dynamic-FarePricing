@@ -9,7 +9,7 @@ public class EventUtil {
 		PriceEvent event = new PriceEvent();
 		
 		String[] values = csv.split(",");
-		
+		//System.out.println("length of the array->"+values.length);
 		event.setId(values[1]);
 		event.setObservationDate(values[2]);
 		event.setObservationTime(values[3]);
@@ -18,25 +18,27 @@ public class EventUtil {
 		event.setDestination(values[6]);
 		event.setCarrier(values[7]);
 		event.setOutboundDepartureDate(values[8]);
-		event.setOutBoundArrivalTime(values[9]);
+		event.setOutboundArrivalDate(values[9]);
+		//event.setOutBoundArrivalTime(values[9]);
 		event.setInboundDepartureDate(values[10]);
-		event.setInboundArrivalTime(values[11]);
-		event.setOutboundBookingClass(values[12]);
-		event.setInboundBookingClass(values[13]);
-		event.setPriceEXC(values[14]);
-		event.setPriceINC(values[15]);
-		event.setTax(values[16]);
-		event.setCurrency(values[17]);
-		event.setSource(values[18]);
-		event.setPriceInbound(values[19]);
-		event.setPriceOutbound(values[20]);
-		event.setIsTaxIncCutIn(values[21]);
-		event.setCompartment(values[22]);
-		event.setLoadDate(values[23]);
-		event.setOutBoundDepartureTime(values[24]);
-		event.setInboundDepartureTime(values[25]);
-		event.setOutBoundArrivalTime(values[26]);
-		event.setInboundArrivalTime(values[27]);
+		event.setInboundArrivalDate(values[11]);
+		//event.setInboundArrivalTime(values[11]);
+		event.setOutboundBookingClass(values[14]);
+		event.setInboundBookingClass(values[15]);
+		event.setPriceEXC(values[16]);
+		event.setPriceINC(values[17]);
+		event.setTax(values[18]);
+		event.setCurrency(values[19]);
+		event.setSource(values[20]);
+		event.setPriceInbound(values[22]);
+		event.setPriceOutbound(values[21]);
+		event.setIsTaxIncCutIn(values[23]);
+		event.setCompartment(values[24]);
+		event.setLoadDate(values[25]);
+		event.setOutBoundDepartureTime(values[26]);
+		event.setInboundDepartureTime(values[27]);
+		event.setOutBoundArrivalTime(values[28]);
+		//event.setInboundArrivalTime(values[29]);
 		event.setOd(values[5]+values[6]);
 		return event;
 		
