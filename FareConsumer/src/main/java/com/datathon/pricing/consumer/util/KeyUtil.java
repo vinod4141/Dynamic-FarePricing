@@ -16,13 +16,13 @@ public class KeyUtil {
 				
 					byte[] result = null;
 					StringBuffer buf = null;
-					 String strKey = null;// = carrier+origin+destination+outboundDepartureDate+outBoundDepartureTime+compartment;
+					// String strKey = null;// = carrier+origin+destination+outboundDepartureDate+outBoundDepartureTime+compartment;
 					MessageDigest md = MessageDigest.getInstance("MD5");
 					// allocate room for the hash
 					result = new byte[md.getDigestLength()];
 					// calculate hash
 					md.reset();
-					md.update(strKey.getBytes());
+					md.update(key.getBytes());
 					result = md.digest();
 				
 	        	    hashCode=  ByteBuffer.wrap(result).getInt();
@@ -39,8 +39,13 @@ public class KeyUtil {
 	}
 	
 	public int getPriceEventWOCarrKey(PriceEvent value){
-		return getKey(value.getOrigin()+value.getDestination()+value.getInboundDepartureDate()
-					  +value.getInboundDepartureTime()+value.getCompartment());
+		
+		System.out.println(value.toString());
+		
+		System.out.println("getPriceEventWOCarrKey::Key value->"+value.getOrigin()+"-"+value.getDestination()+"-"+value.getOutboundDepartureDate()
+		+"-"+value.getCompartment());
+		return getKey(value.getOrigin()+value.getDestination()+value.getOutboundDepartureDate()
+					  +value.getCompartment());
 		
 	}
 

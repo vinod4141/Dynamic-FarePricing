@@ -27,7 +27,7 @@ public class ReadExcel
     	List<AlertDetail> alerts = new ArrayList<AlertDetail>();
         try
         {
-            FileInputStream file = new FileInputStream(new File("D:/vinod/Alerts_Excel.xlsx"));
+            FileInputStream file = new FileInputStream(new File("/opt/files/Alerts_Excel.xlsx"));
  
             //Create Workbook instance holding reference to .xlsx file
             XSSFWorkbook workbook = new XSSFWorkbook(file);
