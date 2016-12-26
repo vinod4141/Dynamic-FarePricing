@@ -46,10 +46,10 @@ public class FlinkConsumer {
 		//map.put("bootstrap.servers", "localhost:9092");
 		//map.put("zookeeper.connect", "localhost:2181");
 		
-		map.put("group.id", "gr115");
+		map.put("group.id", "gr2121");
 		map.put("auto.offset.reset", "earliest");
 		
-		map.put("topic", "datathon1");
+		map.put("topic", "datathon2");
 		//map.put("topic", "price4");
 		
 		String json = null;
@@ -67,9 +67,10 @@ public class FlinkConsumer {
 				public PriceEvent map(String value) {
 					if (!"".equalsIgnoreCase(value)) {
 						try {
-							PriceEvent event = EventUtil.getPriceEvent(value);
+							System.out.println("input --" + value);
+							 event = EventUtil.getPriceEvent(value);
 						} catch (Exception e) {
-							System.out.println("input--" + value);
+							System.out.println("input error--" + value);
 
 						}
 					}
@@ -101,6 +102,7 @@ public class FlinkConsumer {
 				@Override
 				public boolean filter(PriceEvent value) throws Exception {
 					if (value!=null && "EK".equalsIgnoreCase(value.getCarrier())) {
+						System.out.println("ekFilteredEventstream::EK element ->"+value);
 						return true;
 					} else {
 						return false;
@@ -153,8 +155,8 @@ public class FlinkConsumer {
 					return new KeyUtil().getPriceEventWOCarrKey(evt);
 				}
 			};
-			DataStream<PriceEvent> pricechangeAlert = ekFilteredEventstream.connect(dsPriceEvent).keyBy(keyEK, keyEK)
-					.map(new PriceChangeActor());// map(new PriceChangeActor());
+			DataStream<PriceEvent> pricechangeAlert = ekFilteredEventstream.connect(dsPriceEvent).keyBy(keyEK, keyEK).map(new PriceChangeActor());             //
+					// map(new PriceChangeActor());
 
 		///dsPriceEvent.print();
 	//	DataStream<PriceEvent, Integer> countwindow1  = keyByONDStream.countWindow(2).sum(new count(PriceEvent pe));
@@ -214,13 +216,17 @@ public class FlinkConsumer {
         @Override
 		public  PriceEvent map1(PriceEvent value1) throws Exception {
 			// TODO Auto-generated method stub
-        	if(value1!=null)
+        	System.out.println("EK element map1->"+emiratesElement);
+        	
+        	if(value1!=null) {
 			emiratesKey = new KeyUtil().getPriceEventWOCarrKey(value1);
+			emiratesElement=value1;
 			System.out.println("EK element map1->"+emiratesElement);
-			if(emiratesElement!=null && value1!=null) {
-				System.out.println("EK element map1->"+emiratesElement);
-				emiratesElement = value1;
-			}
+        	}
+//			if(emiratesElement!=null && value1!=null) {
+//				System.out.println("EK element map1->"+emiratesElement);
+//				emiratesElement = value1;
+//			}
 			return emiratesElement;
 			
 		}
@@ -228,16 +234,21 @@ public class FlinkConsumer {
 		@Override
 		public PriceEvent map2(PriceEvent value2) throws Exception {
 			// TODO Auto-generated method stub
+			System.out.println("other  element map2->"+value2);
+			System.out.println("EK element map2->"+emiratesElement);
 			PriceEvent evt=new PriceEvent();
 			if(value2!=null && emiratesElement!=null) {
 			otherKey = new KeyUtil().getPriceEventWOCarrKey(value2);
-			
+			System.out.println("EK element map2->" + "emiratesKey->"+emiratesKey+"otherKey->"+otherKey);
 			int pricechange = Math.abs(value2.getPriceChange().intValue());
 			System.out.println("EK element map2->" + emiratesElement);
 			System.out.println("other element map2->" + value2);
 			System.out.println("EK and other price comparisionvalues :other-emirate-difference ->" + pricechange + "-"
 					+ emiratesElement.getPriceINC() + "-"
 					+ Math.abs(pricechange - new Integer(emiratesElement.getPriceINC())));
+			if (emiratesKey.equals( otherKey)) {
+				System.out.println("EK and other key same->");
+			}
 			if (emiratesKey == otherKey && emiratesElement != null && value2 !=null && pricechange > 0
 					&& Math.abs(pricechange - new Integer(emiratesElement.getPriceINC())) > 0) {
 				// Need to generate alert
