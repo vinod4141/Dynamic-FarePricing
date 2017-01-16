@@ -7,9 +7,7 @@
     <version>0.0.1-SNAPSHOT</version>
   </parent>
 
-  <groupId>com.emirates.datathon.pricing</groupId>
   <artifactId>FareConsumer</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>FareConsumer</name>
@@ -81,6 +79,12 @@
 	<dependency>
 	    <groupId>org.apache.hadoop</groupId>
 	    <artifactId>hadoop-common</artifactId>
+	    <exclusions>
+        	<exclusion>
+            	<artifactId>jdk.tools</artifactId>
+            	<groupId>jdk.tools</groupId>
+        	</exclusion>
+    	</exclusions>
 	    <version>2.7.2</version>
 	</dependency>
     <!-- https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-core -->
@@ -89,7 +93,16 @@
 	    <artifactId>hadoop-core</artifactId>
 	    <version>0.20.2</version>
 	</dependency>
-    
+    <dependency>
+    	<groupId>io.projectreactor</groupId>
+    	<artifactId>reactor-core</artifactId>
+    	<version>3.0.3.RELEASE</version>
+    </dependency>
+    <dependency>
+	    <groupId>io.projectreactor.kafka</groupId>
+	    <artifactId>reactor-kafka</artifactId>
+	    <version>1.0.0.M1</version>
+	</dependency>
   </dependencies>
 
   <build>
