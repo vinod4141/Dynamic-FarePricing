@@ -159,7 +159,7 @@ public class FlinkConsumer {
 */						evtCurr.setPriceChange(
 								(new Double(evtCurr.getPriceINC()) - new Double(evtPrev.getPriceINC())));
 						//DO this in eventPrice object?????
-						evtCurr.setPriviousFare(Double.valueOf(evtPrev.getPriceINC()));
+						evtCurr.setPreviousFare(Double.valueOf(evtPrev.getPriceINC()));
 
 						return evtCurr;
 					}
