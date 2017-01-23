@@ -45,7 +45,17 @@ public class PriceEvent {
 	   private String InboundArrivalTime="" ;
 	   private String od="";
 	   private Double priceChange=0.0;
+	   private Double previousFare=0.0;
 	   
+	   
+	
+	
+	public Double getPreviousFare() {
+		return previousFare;
+	}
+	public void setPreviousFare(Double previousFare) {
+		this.previousFare = previousFare;
+	}
 	public String getSr_no() {
 		return sr_no;
 	}
