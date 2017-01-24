@@ -297,6 +297,38 @@ public class PriceEvent {
 		
 		return priceKey;
 	}
+	
+	public int  getDeDupCheckKey() {
+	    int hashCode = 0;
+
+		 try {
+			
+				byte[] result = null;
+				StringBuffer buf = null;
+				 String strKey = carrier+origin+destination+outboundDepartureDate+outBoundDepartureTime+compartment+priceINC;
+				MessageDigest md = MessageDigest.getInstance("MD5");
+				// allocate room for the hash
+				result = new byte[md.getDigestLength()];
+				// calculate hash
+				md.reset();
+				md.update(strKey.getBytes());
+				result = md.digest();
+			
+        	    hashCode=  ByteBuffer.wrap(result).getInt();
+	
+		 } catch (NoSuchAlgorithmException cnse) {
+		     try {
+				throw new DigestException("couldn't make digest of partial content");
+			} catch (DigestException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		 }		
+		
+		
+		return hashCode;
+	}
+	
 	/**
 	 * Returns the sliding window.
 	 * @param value
@@ -308,9 +340,11 @@ public class PriceEvent {
 	}
 	
 	public String toString() {
-		return carrier + ":" + origin + ":" + destination + ":" + outboundDepartureDate + ":" + outBoundDepartureTime
-				+ ":" + compartment + ":" + priceINC;
+		return carrier + ":" + observationTime+ ":"  + origin + ":" + destination + ":" + outboundDepartureDate + ":" + outBoundDepartureTime
+				+ ":" + compartment + ":" + priceINC +    ":" + previousFare + ":" + priceChange;
 	}
+	
+	
 	
 public static void main(String[] args) {
 	DataStream<PriceEvent> streamFiletered; //Filetered data stream.

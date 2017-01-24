@@ -40,10 +40,10 @@ public class KeyUtil {
 	
 	public int getPriceEventWOCarrKey(PriceEvent value){
 		
-		System.out.println(value.toString());
+		//System.out.println(value.toString());
 		
-		System.out.println("getPriceEventWOCarrKey::Key value->"+value.getOrigin()+"-"+value.getDestination()+"-"+value.getOutboundDepartureDate()
-		+"-"+value.getCompartment());
+/*		System.out.println("getPriceEventWOCarrKey::Key value->"+value.getOrigin()+"-"+value.getDestination()+"-"+value.getOutboundDepartureDate()
+		+"-"+value.getCompartment());*/
 		return getKey(value.getOrigin()+value.getDestination()+value.getOutboundDepartureDate()
 					  +value.getCompartment());
 		

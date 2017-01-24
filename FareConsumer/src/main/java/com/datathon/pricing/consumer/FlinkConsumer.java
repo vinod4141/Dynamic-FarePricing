@@ -9,10 +9,14 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
+import org.apache.flink.api.common.functions.RichFlatMapFunction;
+import org.apache.flink.api.common.state.ValueState;
+import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.JoinFunction;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.ConnectedStreams;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.JoinedStreams;
@@ -62,7 +66,8 @@ public class FlinkConsumer {
 		map.put("group.id", "gars211r271");
 		map.put("auto.offset.reset", "earliest");
 		
-		map.put("topic", "datathon");
+		map.put("topic", "datathon1");
+		System.out.println("topic->datathon1" );
 		//map.put("topic", "price4");
 		
 		String json = null;
@@ -122,9 +127,11 @@ public class FlinkConsumer {
 				}
 			}
 	
-		});
+		}).keyBy(new KeySelector<PriceEvent, Integer>() {
+		     public Integer getKey(PriceEvent priceEvent) { return priceEvent.hashCode(); }
+		   }).flatMap(new DuplicateFilter());
 			
-		
+		ekFilteredEventstream.print();
 		//Other than EK events
 		DataStream<PriceEvent> otherFilteredEventstream = priceEventstream.filter(new FilterFunction<PriceEvent>() {
 			private static final long serialVersionUID = -6867736771747690202L;
@@ -139,19 +146,23 @@ public class FlinkConsumer {
 			}
 
 		});
+		//DataStream<PriceEvent> otherFilteredEventstream = otherFilteredEventstream0.flatMap(new DuplicateFilter());
+		//otherFilteredEventstream.print();
 
-
+		
 		//Created different streams based on OND
 		KeyedStream<PriceEvent, Integer>  keyByONDStream =    otherFilteredEventstream.keyBy(new KeySelector<PriceEvent, Integer>() {
 	     public Integer getKey(PriceEvent priceEvent) { return priceEvent.hashCode(); }
 	   });
 
+		//keyByONDStream.print();
+		
 		
 		//Generate price events if there is a price change
 		DataStream<PriceEvent> dsPriceChangeStream = keyByONDStream.countWindow(2, 1)
 				.reduce(new ReduceFunction<PriceEvent>() {
 					@Override
-					public PriceEvent reduce(PriceEvent current, PriceEvent previous) throws Exception {
+					public PriceEvent reduce(PriceEvent previous, PriceEvent current) throws Exception {
 						PriceEvent evtCurr = (PriceEvent) current;
 						PriceEvent evtPrev = (PriceEvent) previous;
 /*						System.out.println("KEY->" + evtCurr.hashCode() + " evtCurr->"
@@ -176,7 +187,7 @@ public class FlinkConsumer {
 
 		});
 		
-		//dsPriceChangeStream.print();
+		dsPriceChangeStream.print();
 		
 		KeySelector keyEK = new KeySelector<PriceEvent, Integer>() {
 			public Integer getKey(PriceEvent evt) {
@@ -196,15 +207,18 @@ public class FlinkConsumer {
 		
 		nonEKAndEKStream.print();
 		DataStream<String> alertStream =  nonEKAndEKStream.flatMap(new FlatMapFunction<Tuple2<PriceEvent, PriceEvent>, String>(){
+
+
 			
 			@Override
 			public void flatMap(Tuple2<PriceEvent, PriceEvent> value, Collector<String> out) throws Exception {
 				PriceEvent pe =value.f1;
-				Double difference= pe.getPriceChange() - new Double(value.f0.getPriceINC());
+				//Difference between NONEK and EK
+				Double difference= new Double(pe.getPriceINC()) - new Double(value.f0.getPriceINC());
 				//System.out.println("difference between NON EK and EK  is  --->"+ difference);
 					if(difference>0  || difference< 0){
 						AlertDetail alert = new AlertDetail();
-						alert.setAlertId(pe.getId() );
+						alert.setAlertId(pe.getId()+"_"+ value.f0.getId());
 						alert.setCarrier(pe.getCarrier());
 						alert.setCompartment(pe.getCompartment());
 						alert.setCurrency(pe.getCurrency());
@@ -240,7 +254,7 @@ public class FlinkConsumer {
 		        "reactive",       // Topic to write to
 		        new SimpleStringSchema())  // Serializer (provided as util)
 		);		
-		//alertStream.print();
+		alertStream.print();
 		env.execute();
 	
 		} catch (Exception e){
@@ -265,6 +279,34 @@ public class FlinkConsumer {
 			return System.currentTimeMillis() ;
 		}
 	}
+	
+	
+	public  static class DuplicateFilter extends RichFlatMapFunction<PriceEvent, PriceEvent> {
+
+	   
+	   
+	   private transient ValueState<PriceEvent> operatorState;
+
+	   @Override
+	   public void open(Configuration configuration) {
+		   
+		   ValueStateDescriptor<PriceEvent> descriptor = new ValueStateDescriptor<>("seen", PriceEvent.class, new PriceEvent());
+	       operatorState = getRuntimeContext().getState(descriptor);
+	   }
+
+	   @Override
+	   public void flatMap( PriceEvent value, Collector<PriceEvent> out) throws Exception {
+	       if (operatorState.value().getDeDupCheckKey() !=value.getDeDupCheckKey()) {
+	           // we haven't seen the element yet
+	           out.collect(value);
+	           // set operator state to true so that we don't emit elements with this key again
+	           operatorState.update(value);
+	       }
+	   }
+
+
+	}
+
 		
 	}
 

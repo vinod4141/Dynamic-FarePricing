@@ -240,6 +240,8 @@ public class AlertDetail {
 		sb.append("carrier:"+carrier + " ");
 		sb.append("departureDate:"+departureDate + " ");
 		sb.append("departureTime:"+departureTime + " ");
+		sb.append("differenceTOEK:"+differencetoEK + " ");
+		
 		return sb.toString();
 		
 	}
