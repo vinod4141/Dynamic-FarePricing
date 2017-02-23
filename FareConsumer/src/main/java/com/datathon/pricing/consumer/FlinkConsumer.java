@@ -4,27 +4,44 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
+import org.apache.flink.api.common.functions.RichFlatMapFunction;
+import org.apache.flink.api.common.state.ValueState;
+import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.functions.FilterFunction;
-
+import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.functions.JoinFunction;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.ConnectedStreams;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.JoinedStreams;
+import org.apache.flink.streaming.api.datastream.JoinedStreams.WithWindow;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.co.CoMapFunction;
 import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor;
+import org.apache.flink.streaming.api.windowing.assigners.SlidingProcessingTimeWindows;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer09;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer09;
 import org.apache.flink.streaming.util.serialization.SimpleStringSchema;
+import org.apache.flink.util.Collector;
 import org.apache.flink.api.java.functions.KeySelector;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 
+import com.datathon.pricing.consumer.model.AlertDetail;
 import com.datathon.pricing.consumer.model.PriceEvent;
 import com.datathon.pricing.consumer.util.EventUtil;
 import com.datathon.pricing.consumer.util.KeyUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 public class FlinkConsumer {
@@ -43,45 +60,45 @@ public class FlinkConsumer {
 		Map  map  = new HashMap();
 		map.put("bootstrap.servers", "10.100.12.165:9092");
 		map.put("zookeeper.connect", "10.100.12.165:2181");
-		//map.put("bootstrap.servers", "localhost:9092");
-		//map.put("zookeeper.connect", "localhost:2181");
-		
-		map.put("group.id", "gr2121");
+/*		map.put("bootstrap.servers", "localhost:9092");
+		map.put("zookeeper.connect", "localhost:2181");
+*/		
+		map.put("group.id", "gars211r2712");
 		map.put("auto.offset.reset", "earliest");
 		
-		map.put("topic", "datathon2");
+		map.put("topic", "datathon3");
+		System.out.println("topic->datathon1" );
 		//map.put("topic", "price4");
 		
 		String json = null;
 		// parse user parameters
 		ParameterTool parameterTool = ParameterTool.fromMap(map);
 		FlinkKafkaConsumer09 fkConsumer   = new FlinkKafkaConsumer09<>(parameterTool.getRequired("topic"), new SimpleStringSchema(), parameterTool.getProperties());
-		fkConsumer.assignTimestampsAndWatermarks(new AirlinePriceTSExtractor());
+		//fkConsumer.assignTimestampsAndWatermarks(new AirlinePriceTSExtractor());
+		
+		//Reading from kafka
 		DataStream<String> messageStream = env.addSource(fkConsumer);
 
-			DataStream<PriceEvent> priceEventstream = messageStream.map(new MapFunction<String, PriceEvent>() {
-				private static final long serialVersionUID = -6867736771747690202L;
-				PriceEvent event = null;
+		//Converting to price event and returing only when value is there 
+		DataStream<PriceEvent> priceEventstream = messageStream.flatMap(new FlatMapFunction<String,PriceEvent >() {
+			private static final long serialVersionUID = -6867736771747690202L;
+			PriceEvent event = null;
 
-				@Override
-				public PriceEvent map(String value) {
-					if (!"".equalsIgnoreCase(value)) {
-						try {
-							System.out.println("input --" + value);
-							 event = EventUtil.getPriceEvent(value);
-						} catch (Exception e) {
-							System.out.println("input error--" + value);
-
-						}
-					}
-					// System.out.println("input--" + value);
-					return event;
+			@Override
+			public void flatMap(String value, Collector<PriceEvent> out) throws Exception {
+				if (!"".equalsIgnoreCase(value)) {
+						 event = EventUtil.getPriceEvent(value);
+						 out.collect(event);
 				}
+				// System.out.println("input--" + value);
+				
+				//return event;
+			}
 
-			});
+		});
 		
 		
-		
+		//Filtering based on specific interested OND
 		DataStream<PriceEvent> ONDFilteredEventstream = priceEventstream.filter(new FilterFunction<PriceEvent>() {
 			private static final long serialVersionUID = -6867736771747690202L;
 
@@ -96,92 +113,148 @@ public class FlinkConsumer {
 			
 		});		
 		
-			DataStream<PriceEvent> ekFilteredEventstream = priceEventstream.filter(new FilterFunction<PriceEvent>() {
-				private static final long serialVersionUID = -6867736771747690202L;
-
-				@Override
-				public boolean filter(PriceEvent value) throws Exception {
-					if (value!=null && "EK".equalsIgnoreCase(value.getCarrier())) {
-						System.out.println("ekFilteredEventstream::EK element ->"+value);
-						return true;
-					} else {
-						return false;
-					}
+		//Only EK EVENTS
+		DataStream<PriceEvent> ekFilteredEventstream = priceEventstream.filter(new FilterFunction<PriceEvent>() {
+			private static final long serialVersionUID = -6867736771747690202L;
+	
+			@Override
+			public boolean filter(PriceEvent value) throws Exception {
+				if (value!=null && "EK".equalsIgnoreCase(value.getCarrier())) {
+					//System.out.println("ekFilteredEventstream::EK element ->"+value);
+					return true;
+				} else {
+					return false;
 				}
-
-			});
-			
-			DataStream<PriceEvent> otherFilteredEventstream = priceEventstream.filter(new FilterFunction<PriceEvent>() {
-				private static final long serialVersionUID = -6867736771747690202L;
-
-				@Override
-				public boolean filter(PriceEvent value) throws Exception {
-					if (value!=null && !"EK".equalsIgnoreCase(value.getCarrier())) {
-						return true;
-					} else {
-						return false;
-					}
-				}
-
-			});
-			//ONDFilteredEventstream.print();
-		//
-		KeyedStream<PriceEvent, Integer>  keyByONDStream =    otherFilteredEventstream.keyBy(new KeySelector<PriceEvent, Integer>() {
+			}
+	
+		}).keyBy(new KeySelector<PriceEvent, Integer>() {
 		     public Integer getKey(PriceEvent priceEvent) { return priceEvent.hashCode(); }
-		   });
-		
-		
-			DataStream<PriceEvent> dsPriceEvent = keyByONDStream.countWindow(2, 1)
-					.reduce(new ReduceFunction<PriceEvent>() {
-						@Override
-						public PriceEvent reduce(PriceEvent current, PriceEvent previous) throws Exception {
-							PriceEvent evtCurr = (PriceEvent) current;
-							PriceEvent evtPrev = (PriceEvent) previous;
-							System.out.println("KEY->" + evtCurr.hashCode() + " evtCurr->"
-									+ evtCurr.getInboundDepartureDate()+ evtCurr.getInboundDepartureTime() + "  ---evtPrev->" + evtPrev.getInboundDepartureDate()+ evtPrev.getInboundDepartureTime());
-							// if(Math.abs(new Integer(evtCurr.getPriceEXC())-
-							// new Integer(evtPrev.getPriceEXC()))
-							// /new Integer(evtCurr.getPriceEXC())>0.20) {
-
-							evtCurr.setPriceChange(
-									(new Double(evtCurr.getPriceINC()) - new Double(evtPrev.getPriceINC())));
-							// }
-							return evtCurr;
-						}
-					});
-
-			KeySelector keyEK = new KeySelector<PriceEvent, Integer>() {
-				public Integer getKey(PriceEvent evt) {
-					return new KeyUtil().getPriceEventWOCarrKey(evt);
-				}
-			};
-			DataStream<PriceEvent> pricechangeAlert = ekFilteredEventstream.connect(dsPriceEvent).keyBy(keyEK, keyEK).map(new PriceChangeActor());             //
-					// map(new PriceChangeActor());
-
-		///dsPriceEvent.print();
-	//	DataStream<PriceEvent, Integer> countwindow1  = keyByONDStream.countWindow(2).sum(new count(PriceEvent pe));
-	//	countwindow1.print();
-		  
-//	DataStream<PriceEvent>  gpevenst  = ONDFilteredEventstream.transform(operatorName, outTypeInfo, operator)
-		
-		// print() will write the contents of the stream to the TaskManager's standard out stream
-		// the rebelance call is causing a repartitioning of the data so that all machines
-		// see the messages (for example in cases when "num kafka partitions" < "num flink operators"
-		/*messageStream.rebalance().map(new MapFunction<String, String>() {
+		   }).flatMap(new DuplicateFilter());
+			
+		ekFilteredEventstream.print();
+		//Other than EK events
+		DataStream<PriceEvent> otherFilteredEventstream = priceEventstream.filter(new FilterFunction<PriceEvent>() {
 			private static final long serialVersionUID = -6867736771747690202L;
 
 			@Override
-			public String map(String value) throws Exception {
-				
-				PriceEvent event = EventUtil.getPriceEvent(value);
-				return EventUtil.getEventJSON(event);
-				//return "Kafka and Flink says: " + value;
-				
+			public boolean filter(PriceEvent value) throws Exception {
+				if (value!=null && !"EK".equalsIgnoreCase(value.getCarrier())) {
+					return true;
+				} else {
+					return false;
+				}
 			}
-			
-		}).print();*/
+
+		});
+		//DataStream<PriceEvent> otherFilteredEventstream = otherFilteredEventstream0.flatMap(new DuplicateFilter());
+		//otherFilteredEventstream.print();
+
 		
-		//ONDFilteredEventstream.print();
+		//Created different streams based on OND
+		KeyedStream<PriceEvent, Integer>  keyByONDStream =    otherFilteredEventstream.keyBy(new KeySelector<PriceEvent, Integer>() {
+	     public Integer getKey(PriceEvent priceEvent) { return priceEvent.hashCode(); }
+	   });
+
+		//keyByONDStream.print();
+		
+		
+		//Generate price events if there is a price change
+		DataStream<PriceEvent> dsPriceChangeStream = keyByONDStream.countWindow(2, 1)
+				.reduce(new ReduceFunction<PriceEvent>() {
+					@Override
+					public PriceEvent reduce(PriceEvent previous, PriceEvent current) throws Exception {
+						PriceEvent evtCurr = (PriceEvent) current;
+						PriceEvent evtPrev = (PriceEvent) previous;
+/*						System.out.println("KEY->" + evtCurr.hashCode() + " evtCurr->"
+								+ evtCurr.getInboundDepartureDate()+ evtCurr.getInboundDepartureTime() + "  ---evtPrev->" + evtPrev.getInboundDepartureDate()+ evtPrev.getInboundDepartureTime());
+*/						evtCurr.setPriceChange(
+								(new Double(evtCurr.getPriceINC()) - new Double(evtPrev.getPriceINC())));
+						//DO this in eventPrice object?????
+						evtCurr.setPreviousFare(Double.valueOf(evtPrev.getPriceINC()));
+
+						return evtCurr;
+					}
+				}).filter(new FilterFunction<PriceEvent>() {
+
+			@Override
+			public boolean filter(PriceEvent value) throws Exception {
+				if (value.getPriceChange() !=0) {
+					return true;
+				} else {
+					return false;
+				}
+			}
+
+		});
+		
+		dsPriceChangeStream.print();
+		
+		KeySelector keyEK = new KeySelector<PriceEvent, Integer>() {
+			public Integer getKey(PriceEvent evt) {
+				return new KeyUtil().getPriceEventWOCarrKey(evt);
+			}
+		};
+			
+
+		
+		WithWindow jStream	= ekFilteredEventstream.join(dsPriceChangeStream).where(keyEK).equalTo(keyEK).window(TumblingProcessingTimeWindows.of(Time.seconds(10)));
+		DataStream<Tuple2<PriceEvent, PriceEvent>> nonEKAndEKStream =	jStream.apply(new JoinFunction<PriceEvent, PriceEvent, Tuple2<PriceEvent, PriceEvent>>() {
+	        @Override
+	        public Tuple2<PriceEvent, PriceEvent> join(PriceEvent first, PriceEvent second) throws Exception {
+	            return new Tuple2<PriceEvent, PriceEvent>(first, second);
+	            }
+	    });
+		
+		nonEKAndEKStream.print();
+		DataStream<String> alertStream =  nonEKAndEKStream.flatMap(new FlatMapFunction<Tuple2<PriceEvent, PriceEvent>, String>(){
+
+
+			
+			@Override
+			public void flatMap(Tuple2<PriceEvent, PriceEvent> value, Collector<String> out) throws Exception {
+				PriceEvent pe =value.f1;
+				//Difference between NONEK and EK
+				Double difference= new Double(pe.getPriceINC()) - new Double(value.f0.getPriceINC());
+				//System.out.println("difference between NON EK and EK  is  --->"+ difference);
+					if(difference>0  || difference< 0){
+						AlertDetail alert = new AlertDetail();
+						alert.setAlertId(pe.getId()+"_"+ value.f0.getId());
+						alert.setCarrier(pe.getCarrier());
+						alert.setCompartment(pe.getCompartment());
+						alert.setCurrency(pe.getCurrency());
+						alert.setOrigin(pe.getOrigin());
+						alert.setDestination(pe.getDestination());
+						alert.setDifferencetoEK(difference);
+						//System.out.println("observe time is  --->"+ pe.getObservationTime());
+                        alert.setProposedFare(Float.valueOf(pe.getPriceINC())*1.10f);
+                        alert.setAvailableFare(Float.valueOf(pe.getPriceINC()));
+                        alert.setDepartureDate(pe.getOutboundDepartureDate());
+                        alert.setDepartureTime(pe.getOutBoundDepartureTime());
+                        alert.setPreviousAvailableFare(0);
+
+    					ObjectMapper mapper = new ObjectMapper();
+    					String jsonInString = null;
+    					try {
+    						jsonInString = mapper.writeValueAsString(alert);
+    					} catch (JsonProcessingException e) {
+    						e.printStackTrace();
+    					}
+    					
+    					//return jsonInString;                        
+                        
+						out.collect(jsonInString); 
+					}
+				 	
+				 }
+			
+		});
+		
+		alertStream.addSink(new FlinkKafkaProducer09<String>(
+		        "10.100.12.165:9092",      // Kafka broker host:port
+		        "reactive1",       // Topic to write to
+		        new SimpleStringSchema())  // Serializer (provided as util)
+		);		
+		alertStream.print();
 		env.execute();
 	
 		} catch (Exception e){
@@ -192,7 +265,7 @@ public class FlinkConsumer {
 		}
 		
 	/**
-	 * Assigns timestamps to TaxiRide records.
+	 * Assigns timestamps to  records.
 	 * Watermarks are a fixed time interval behind the max timestamp and are periodically emitted.
 	 */
 	public static class AirlinePriceTSExtractor extends BoundedOutOfOrdernessTimestampExtractor<String> {
@@ -207,66 +280,35 @@ public class FlinkConsumer {
 		}
 	}
 	
-	public static class PriceChangeActor  implements CoMapFunction<PriceEvent, PriceEvent, PriceEvent> {
-        PriceEvent emiratesElement= null;
-        PriceEvent otherElement= null;
-        Integer emiratesKey = null;
-        Integer otherKey=null;
+	
+	public  static class DuplicateFilter extends RichFlatMapFunction<PriceEvent, PriceEvent> {
 
-        @Override
-		public  PriceEvent map1(PriceEvent value1) throws Exception {
-			// TODO Auto-generated method stub
-        	System.out.println("EK element map1->"+emiratesElement);
-        	
-        	if(value1!=null) {
-			emiratesKey = new KeyUtil().getPriceEventWOCarrKey(value1);
-			emiratesElement=value1;
-			System.out.println("EK element map1->"+emiratesElement);
-        	}
-//			if(emiratesElement!=null && value1!=null) {
-//				System.out.println("EK element map1->"+emiratesElement);
-//				emiratesElement = value1;
-//			}
-			return emiratesElement;
-			
-		}
+	   
+	   
+	   private transient ValueState<PriceEvent> operatorState;
 
-		@Override
-		public PriceEvent map2(PriceEvent value2) throws Exception {
-			// TODO Auto-generated method stub
-			System.out.println("other  element map2->"+value2);
-			System.out.println("EK element map2->"+emiratesElement);
-			PriceEvent evt=new PriceEvent();
-			if(value2!=null && emiratesElement!=null) {
-			otherKey = new KeyUtil().getPriceEventWOCarrKey(value2);
-			System.out.println("EK element map2->" + "emiratesKey->"+emiratesKey+"otherKey->"+otherKey);
-			int pricechange = Math.abs(value2.getPriceChange().intValue());
-			System.out.println("EK element map2->" + emiratesElement);
-			System.out.println("other element map2->" + value2);
-			System.out.println("EK and other price comparisionvalues :other-emirate-difference ->" + pricechange + "-"
-					+ emiratesElement.getPriceINC() + "-"
-					+ Math.abs(pricechange - new Integer(emiratesElement.getPriceINC())));
-			if (emiratesKey.equals( otherKey)) {
-				System.out.println("EK and other key same->");
-			}
-			if (emiratesKey == otherKey && emiratesElement != null && value2 !=null && pricechange > 0
-					&& Math.abs(pricechange - new Integer(emiratesElement.getPriceINC())) > 0) {
-				// Need to generate alert
-				System.out.println("EK and other price comparision Alert->" + "price change hapened");
-				evt = new PriceEvent();
-			}
-			if (emiratesKey != otherKey) {
-				System.out.println("keys are different in comparision->" + "price change hapened");
-				// TODO write the code to compare emirates and other airline.
-				System.out.println("EK and other price comparision->" + emiratesElement.toString());
-				System.out.println("EK element map2->" + value2.toString());
-			}
-			
-		}
-			return evt;
-		}
+	   @Override
+	   public void open(Configuration configuration) {
+		   
+		   ValueStateDescriptor<PriceEvent> descriptor = new ValueStateDescriptor<>("seen", PriceEvent.class, new PriceEvent());
+	       operatorState = getRuntimeContext().getState(descriptor);
+	   }
+
+	   @Override
+	   public void flatMap( PriceEvent value, Collector<PriceEvent> out) throws Exception {
+	       if (operatorState.value().getDeDupCheckKey() !=value.getDeDupCheckKey()) {
+	           // we haven't seen the element yet
+	           out.collect(value);
+	           // set operator state to true so that we don't emit elements with this key again
+	           operatorState.update(value);
+	       }
+	   }
+
+
+	}
+
 		
 	}
 
 
-}
+

@@ -1,6 +1,10 @@
 package com.datathon.pricing.consumer.util;
 
+import java.io.IOException;
+
+import com.datathon.pricing.consumer.model.AlertDetail;
 import com.datathon.pricing.consumer.model.PriceEvent;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 
 public class EventUtil {
@@ -40,6 +44,22 @@ public class EventUtil {
 		event.setOutBoundArrivalTime(values[28]);
 		//event.setInboundArrivalTime(values[29]);
 		event.setOd(values[5]+values[6]);
+		return event;
+		
+	}
+	
+	public static AlertDetail getAlertEvent(String alertJson){
+		AlertDetail event = new AlertDetail();
+		
+		ObjectMapper mapper = new ObjectMapper();
+		
+		try {
+			event = mapper.readValue(alertJson, AlertDetail.class);
+		} catch (IOException e) {
+			
+			e.printStackTrace();
+		}
+	
 		return event;
 		
 	}

@@ -116,7 +116,7 @@ public class AlertDetail {
 	public double getProposedFare() {
 		return proposedFare;
 	}
-	public void setProposedFare(float proposedFare) {
+	public void setProposedFare(double proposedFare) {
 		this.proposedFare = proposedFare;
 	}
 	public String getProposeFareExists() {
@@ -227,5 +227,27 @@ public class AlertDetail {
 	public void setAircraftType(String aircraftType) {
 		this.aircraftType = aircraftType;
 	}
+	
+	public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("KEY:"+hashCode() + " ");
+        sb.append("Origin:"+ origin + " ");
+        
+        sb.append("Destination:"+destination +" " );
+        sb.append("Carrier :"+carrier +" ");
+        sb.append("POS:"+pos+" ");
+        sb.append("departure Date :"+departureDate+" ");
+        sb.append("departure Time:"+departureTime+" ");
+        sb.append("Fare Class:"+fareClass+" ");
+                                        
+        sb.append("AvailableFare:"+availableFare +" " );
+        sb.append("PreviousAvailable :"+previousAvailableFare+" ");
+        sb.append("Difference to EK:"+differencetoEK+" ");
+        sb.append("ProposedFare:"+proposedFare);
+        
+        return sb.toString();
+        
+	}
+
 
 }
