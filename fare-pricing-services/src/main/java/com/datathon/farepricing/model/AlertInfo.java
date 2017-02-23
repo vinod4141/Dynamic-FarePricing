@@ -9,14 +9,14 @@ package com.datathon.farepricing.model;
  */
 public class AlertInfo {
 	
-	private String alertId;
+	private int alertId;
 	private String alertName;
 	private String alertDescription;
 	
-	public String getAlertId() {
-		return alertId;
+	public int getAlertId() {
+		return alertId; 
 	}
-	public void setAlertId(String alertId) {
+	public void setAlertId(int alertId) {
 		this.alertId = alertId;
 	}
 	public String getAlertName() {

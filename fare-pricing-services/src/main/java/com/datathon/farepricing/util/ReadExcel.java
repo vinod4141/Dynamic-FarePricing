@@ -5,6 +5,8 @@ package com.datathon.farepricing.util;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -27,7 +29,7 @@ public class ReadExcel
     	List<AlertDetail> alerts = new ArrayList<AlertDetail>();
         try
         {
-            FileInputStream file = new FileInputStream(new File("/opt/files/Alerts_Excel.xlsx"));
+            FileInputStream file = new FileInputStream(new File("C:/Vinod/Alerts_Excel.xlsx"));
  
             //Create Workbook instance holding reference to .xlsx file
             XSSFWorkbook workbook = new XSSFWorkbook(file);
@@ -39,8 +41,8 @@ public class ReadExcel
            // Iterator<Row> rowIterator = sheet.iterator();
             
             int rows = sheet.getPhysicalNumberOfRows();
-            
-            
+            DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
+            DateFormat time = new SimpleDateFormat("hh:mm");
             AlertDetail alert;
             for ( int i =1; i<rows; i++)
             {
@@ -49,8 +51,8 @@ public class ReadExcel
                 //For each row, iterate through all the columns
                // Iterator<Cell> cellIterator = row.cellIterator();
                 
-                System.out.println(row.getCell(1).getStringCellValue());
-                System.out.println(row.getCell(2).getStringCellValue());
+               // System.out.println(row.getCell(1).getStringCellValue());
+               // System.out.println(row.getCell(2).getStringCellValue());
                /* row.getCell(3).getStringCellValue();
                 row.getCell(4).getStringCellValue();
                 row.getCell(5).getStringCellValue();*/
@@ -66,7 +68,15 @@ public class ReadExcel
                 alert.setAvailableFare(row.getCell(16).getNumericCellValue());
                 alert.setPreviousAvailableFare(row.getCell(17).getNumericCellValue());
                 alert.setDifferencetoEK(row.getCell(18).getNumericCellValue());
-                
+                alert.setProposedFare(row.getCell(21).getNumericCellValue());
+               // alert.setDepartureDate(Double.toString(row.getCell(9).getNumericCellValue()));
+                //alert.setDepartureTime(Double.toString(row.getCell(10).getNumericCellValue()));
+                if(row.getCell(8).getDateCellValue() != null){
+                	alert.setDepartureDate(df.format(row.getCell(8).getDateCellValue()));
+                }
+                if(row.getCell(9).getDateCellValue() != null){
+                	alert.setDepartureTime(time.format(row.getCell(9).getDateCellValue()));
+                }
                 /*while (cellIterator.hasNext()) 
                 {
                     Cell cell = cellIterator.next();
