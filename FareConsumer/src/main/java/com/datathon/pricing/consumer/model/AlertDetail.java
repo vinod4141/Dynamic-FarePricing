@@ -227,26 +227,23 @@ public class AlertDetail {
 	public void setAircraftType(String aircraftType) {
 		this.aircraftType = aircraftType;
 	}
+
 	
 	public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("KEY:"+hashCode() + " ");
-        sb.append("Origin:"+ origin + " ");
-        
-        sb.append("Destination:"+destination +" " );
-        sb.append("Carrier :"+carrier +" ");
-        sb.append("POS:"+pos+" ");
-        sb.append("departure Date :"+departureDate+" ");
-        sb.append("departure Time:"+departureTime+" ");
-        sb.append("Fare Class:"+fareClass+" ");
-                                        
-        sb.append("AvailableFare:"+availableFare +" " );
-        sb.append("PreviousAvailable :"+previousAvailableFare+" ");
-        sb.append("Difference to EK:"+differencetoEK+" ");
-        sb.append("ProposedFare:"+proposedFare);
-        
-        return sb.toString();
-        
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append("alertId:"+alertId + " ");
+		
+		sb.append("origin:"+origin + " ");
+		sb.append("destination:"+destination + " ");
+		sb.append("carrier:"+carrier + " ");
+		sb.append("carrier:"+carrier + " ");
+		sb.append("departureDate:"+departureDate + " ");
+		sb.append("departureTime:"+departureTime + " ");
+		sb.append("differenceTOEK:"+differencetoEK + " ");
+		
+		return sb.toString();
+		
 	}
-
+	
 }
